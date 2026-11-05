@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>India & Brampton — One Heart, Two Timezones</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --india: #FF6B6B;
+    --canada: #4ECDC4;
+    --gold: #FFD700;
+    --pink: #FF69B4;
+    --purple: #8B5CF6;
+    --soft-white: rgba(255,255,255,0.92);
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: 'Georgia', serif;
+    overflow-x: hidden;
+    background: #0f0c29;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  /* ─── Animated gradient background ─── */
+  .bg-gradient {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    background-size: 400% 400%;
+    animation: gradShift 12s ease infinite;
+    z-index: 0;
+  }
+  @keyframes gradShift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* ─── Floating hearts canvas ─── */
+  #heartCanvas {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* ─── Stars ─── */
+  .stars {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle var(--dur, 3s) ease-in-out infinite var(--delay, 0s);
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.1; transform: scale(0.8); }
+    50%       { opacity: 1;   transform: scale(1.2); }
+  }
+
+  /* ─── Content wrapper ─── */
+  .wrapper {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 1100px;
+    padding: 20px 16px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+  }
+
+  /* ─── Header ─── */
+  .header {
+    text-align: center;
+    animation: fadeDown 1s ease;
+  }
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .header h1 {
+    font-size: clamp(1.6rem, 5vw, 3rem);
+    color: white;
+    text-shadow: 0 0 30px rgba(255,105,180,0.8);
+    letter-spacing: 2px;
+  }
+  .header .subtitle {
+    color: rgba(255,255,255,0.7);
+    font-size: clamp(0.85rem, 2vw, 1.1rem);
+    margin-top: 6px;
+    font-style: italic;
+  }
+  .heart-emoji {
+    display: inline-block;
+    animation: heartBeat 1.2s ease-in-out infinite;
+  }
+  @keyframes heartBeat {
+    0%, 100% { transform: scale(1); }
+    14%      { transform: scale(1.3); }
+    28%      { transform: scale(1); }
+    42%      { transform: scale(1.2); }
+    70%      { transform: scale(1); }
+  }
+
+  /* ─── Clocks row ─── */
+  .clocks-row {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  /* ─── Clock card ─── */
+  .clock-card {
+    background: rgba(255,255,255,0.07);
+    backdrop-filter: blur(18px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 28px;
+    padding: 28px 24px 24px;
+    width: clamp(270px, 42vw, 430px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    animation: cardIn 1s ease both;
+  }
+  .clock-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+  }
+  .clock-card.india  { animation-delay: 0.2s; border-color: rgba(255,107,107,0.4); }
+  .clock-card.canada { animation-delay: 0.5s; border-color: rgba(78,205,196,0.4); }
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(40px) scale(0.95); }
+    to   { opacity: 1; transform: translateY(0)  scale(1); }
+  }
+
+  .card-flag {
+    font-size: clamp(2.2rem, 5vw, 3.2rem);
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+    animation: flagWave 3s ease-in-out infinite;
+  }
+  @keyframes flagWave {
+    0%, 100% { transform: rotate(-4deg) scale(1); }
+    50%      { transform: rotate(4deg) scale(1.05); }
+  }
+
+  .card-label {
+    font-size: clamp(1rem, 2.5vw, 1.4rem);
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-align: center;
+  }
+  .india  .card-label { color: var(--india); text-shadow: 0 0 20px rgba(255,107,107,0.5); }
+  .canada .card-label { color: var(--canada); text-shadow: 0 0 20px rgba(78,205,196,0.5); }
+
+  /* ─── Analog clock ─── */
+  .analog-clock {
+    position: relative;
+    width: clamp(150px, 30vw, 200px);
+    height: clamp(150px, 30vw, 200px);
+  }
+  .clock-face {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.12), rgba(0,0,0,0.4));
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.15),
+                inset 0 0 30px rgba(0,0,0,0.5),
+                0 0 40px rgba(255,105,180,0.2);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .india  .clock-face { box-shadow: 0 0 0 3px rgba(255,107,107,0.5), inset 0 0 30px rgba(0,0,0,0.5), 0 0 40px rgba(255,107,107,0.3); }
+  .canada .clock-face { box-shadow: 0 0 0 3px rgba(78,205,196,0.5), inset 0 0 30px rgba(0,0,0,0.5), 0 0 40px rgba(78,205,196,0.3); }
+
+  /* ─── Day / Night face ─── */
+  .clock-face.is-day {
+    background: radial-gradient(circle at 30% 30%, rgba(255,221,120,0.35), rgba(70,130,180,0.45));
+    transition: background 1.2s ease;
+  }
+  .clock-face.is-night {
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), rgba(0,0,10,0.6));
+    transition: background 1.2s ease;
+  }
+  .sky-icon {
+    position: absolute;
+    top: 14%;
+    right: 16%;
+    font-size: clamp(0.9rem, 2.2vw, 1.2rem);
+    z-index: 1;
+    filter: drop-shadow(0 0 6px rgba(0,0,0,0.4));
+  }
+
+  /* Hour markers */
+  .hour-marker {
+    position: absolute;
+    width: 2px;
+    height: 10px;
+    background: rgba(255,255,255,0.5);
+    top: 5px;
+    left: 50%;
+    transform-origin: bottom center;
+    border-radius: 2px;
+  }
+  .hour-marker:nth-child(3n+1) {
+    width: 3px;
+    height: 14px;
+    background: rgba(255,255,255,0.85);
+  }
+
+  /* Hands */
+  .hand {
+    position: absolute;
+    bottom: 50%;
+    left: 50%;
+    transform-origin: bottom center;
+    border-radius: 4px 4px 0 0;
+    transition: transform 0.05s cubic-bezier(0.4, 2.08, 0.55, 0.44);
+  }
+  .hour-hand {
+    width: 5px;
+    height: 28%;
+    margin-left: -2.5px;
+    background: white;
+    box-shadow: 0 0 8px rgba(255,255,255,0.6);
+  }
+  .min-hand {
+    width: 3px;
+    height: 38%;
+    margin-left: -1.5px;
+    background: rgba(255,255,255,0.9);
+    box-shadow: 0 0 6px rgba(255,255,255,0.5);
+  }
+  .india  .sec-hand { background: var(--india); box-shadow: 0 0 10px var(--india); }
+  .canada .sec-hand { background: var(--canada); box-shadow: 0 0 10px var(--canada); }
+  .sec-hand {
+    width: 2px;
+    height: 44%;
+    margin-left: -1px;
+    border-radius: 2px;
+    transition: transform 0.2s cubic-bezier(0.4, 2.08, 0.55, 0.44);
+  }
+  .center-dot {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 0 8px rgba(255,255,255,0.8);
+    z-index: 10;
+  }
+
+  /* ─── Digital time ─── */
+  .digital-time {
+    font-size: clamp(2rem, 5.5vw, 3rem);
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 3px;
+    text-shadow: 0 0 20px currentColor;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.85; }
+  }
+  .india  .digital-time { color: var(--india); }
+  .canada .digital-time { color: var(--canada); }
+
+  .digital-date {
+    color: rgba(255,255,255,0.65);
+    font-size: clamp(0.75rem, 1.8vw, 0.95rem);
+    text-align: center;
+    letter-spacing: 1px;
+  }
+
+  .timezone-badge {
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+  .india  .timezone-badge { background: rgba(255,107,107,0.2); color: var(--india); border: 1px solid rgba(255,107,107,0.4); }
+  .canada .timezone-badge { background: rgba(78,205,196,0.2);  color: var(--canada);  border: 1px solid rgba(78,205,196,0.4); }
+
+  .weather-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    font-weight: bold;
+    text-transform: capitalize;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.85);
+  }
+
+  /* ─── Middle connector ─── */
+  .connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 0;
+    animation: fadeIn 1.5s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  .connector .diff-badge {
+    background: rgba(255,215,0,0.15);
+    border: 1px solid rgba(255,215,0,0.4);
+    color: var(--gold);
+    padding: 8px 20px;
+    border-radius: 24px;
+    font-size: clamp(0.8rem, 2vw, 1rem);
+    text-align: center;
+    white-space: nowrap;
+    box-shadow: 0 0 20px rgba(255,215,0,0.2);
+  }
+  .connector .love-icon {
+    font-size: 2rem;
+    animation: heartBeat 1.2s ease-in-out infinite;
+  }
+
+  /* ─── Love message banner ─── */
+  .love-banner {
+    width: 100%;
+    max-width: 680px;
+    background: rgba(255,105,180,0.1);
+    border: 1px solid rgba(255,105,180,0.3);
+    border-radius: 20px;
+    padding: 20px 28px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .love-banner::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(90deg, transparent, rgba(255,105,180,0.3), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 3s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .love-msg {
+    color: white;
+    font-size: clamp(0.9rem, 2.2vw, 1.15rem);
+    font-style: italic;
+    line-height: 1.6;
+    min-height: 2.5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    animation: msgFade 0.8s ease;
+  }
+  @keyframes msgFade {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .msg-icon { font-size: 1.2rem; }
+
+  /* ─── Distance ribbon ─── */
+  .distance-ribbon {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: rgba(255,255,255,0.55);
+    font-size: clamp(0.75rem, 1.8vw, 0.9rem);
+    letter-spacing: 1px;
+    animation: fadeIn 2s ease;
+  }
+  .ribbon-line {
+    height: 1px;
+    width: 60px;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.3));
+  }
+  .ribbon-line.r { transform: scaleX(-1); }
+
+  /* ─── Orbital animation around clocks ─── */
+  @keyframes orbit {
+    from { transform: rotate(0deg) translateX(var(--r)) rotate(0deg); }
+    to   { transform: rotate(360deg) translateX(var(--r)) rotate(-360deg); }
+  }
+  .orbit-heart {
+    position: absolute;
+    font-size: 0.9rem;
+    pointer-events: none;
+    animation: orbit var(--speed, 6s) linear infinite;
+    --r: 115px;
+    animation-delay: var(--od, 0s);
+  }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 640px) {
+    .clocks-row { flex-direction: column; align-items: center; }
+    .connector  { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+    .clock-card { width: 100%; max-width: 340px; }
+    .connector .diff-badge { font-size: 0.82rem; }
+  }
+
+  /* ─── Glowing footer ─── */
+  .footer {
+    color: rgba(255,255,255,0.35);
+    font-size: 0.75rem;
+    text-align: center;
+    padding-bottom: 16px;
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-gradient"></div>
+<canvas id="heartCanvas"></canvas>
+<div class="stars" id="stars"></div>
+
+<div class="wrapper">
+
+  <!-- Header -->
+  <div class="header">
+    <h1><span class="heart-emoji">💖</span> One Heart, Two Timezones</h1>
+    <div class="subtitle">India &amp; Brampton, Canada — love knows no distance</div>
+  </div>
+
+  <!-- Clocks row -->
+  <div class="clocks-row">
+
+    <!-- India -->
+    <div class="clock-card india">
+      <div class="card-flag">🇮🇳</div>
+      <div class="card-label">India (IST)</div>
+      <div class="analog-clock" id="clockIndia">
+        <div class="clock-face" id="faceIndia">
+          <!-- markers injected by JS -->
+          <span class="sky-icon" id="iSky">☀️</span>
+          <div class="hand hour-hand" id="ihour"></div>
+          <div class="hand min-hand"  id="imin"></div>
+          <div class="hand sec-hand"  id="isec"></div>
+          <div class="center-dot"></div>
+        </div>
+      </div>
+      <div class="digital-time" id="indiaTime">--:--:--</div>
+      <div class="digital-date"  id="indiaDate"></div>
+      <div class="timezone-badge">UTC +5:30</div>
+      <div class="weather-badge" id="indiaWeather">🌤 ...</div>
+    </div>
+
+    <!-- Connector -->
+    <div class="connector">
+      <div class="love-icon">✈️</div>
+      <div class="diff-badge" id="diffBadge">⏱ Loading...</div>
+      <div class="love-icon">💌</div>
+    </div>
+
+    <!-- Canada -->
+    <div class="clock-card canada">
+      <div class="card-flag">🇨🇦</div>
+      <div class="card-label">Brampton, Canada</div>
+      <div class="analog-clock" id="clockCanada">
+        <div class="clock-face" id="faceCan">
+          <span class="sky-icon" id="cSky">☀️</span>
+          <div class="hand hour-hand" id="chour"></div>
+          <div class="hand min-hand"  id="cmin"></div>
+          <div class="hand sec-hand"  id="csec"></div>
+          <div class="center-dot"></div>
+        </div>
+      </div>
+      <div class="digital-time" id="canadaTime">--:--:--</div>
+      <div class="digital-date"  id="canadaDate"></div>
+      <div class="timezone-badge" id="canTZbadge">UTC</div>
+      <div class="weather-badge" id="canadaWeather">🌤 ...</div>
+    </div>
+
+  </div>
+
+  <!-- Love message -->
+  <div class="love-banner">
+    <div class="love-msg" id="loveMsg">
+      <span class="msg-icon">💕</span>
+      <span id="msgText">Loading love...</span>
+      <span class="msg-icon">💕</span>
+    </div>
+  </div>
+
+  <!-- Distance ribbon -->
+  <div class="distance-ribbon">
+    <div class="ribbon-line"></div>
+    <span>✈️ ~11,700 km separates you · time cannot</span>
+    <div class="ribbon-line r"></div>
+  </div>
+
+  <div class="footer">made with 💖 · clocks auto-update · time is real</div>
+
+</div>
+
+<script>
+/* ─── Stars ─── */
+(function spawnStars() {
+  const container = document.getElementById('stars');
+  for (let i = 0; i < 120; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%; top:${Math.random()*100}%;
+      --dur:${(Math.random()*3+2).toFixed(1)}s;
+      --delay:${(Math.random()*4).toFixed(1)}s;
+    `;
+    container.appendChild(s);
+  }
+})();
+
+/* ─── Analog clock markers ─── */
+['faceIndia','faceCan'].forEach(id => {
+  const face = document.getElementById(id);
+  for (let i = 0; i < 60; i++) {
+    const m = document.createElement('div');
+    m.className = 'hour-marker';
+    const r = face.offsetWidth / 2 || 100;
+    m.style.transform = `rotate(${i*6}deg)`;
+    face.insertBefore(m, face.firstChild);
+  }
+});
+
+/* ─── Floating hearts canvas ─── */
+const canvas = document.getElementById('heartCanvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+
+const HEART_CHARS = ['❤️','💕','💖','💗','💓','💞','💝','✨','⭐','🌟'];
+const particles = Array.from({length: 35}, () => newParticle(true));
+
+function newParticle(rand) {
+  return {
+    x: Math.random() * (W || 800),
+    y: rand ? Math.random() * (H || 600) : (H || 600) + 20,
+    size: Math.random() * 18 + 10,
+    speed: Math.random() * 0.6 + 0.3,
+    drift: (Math.random() - 0.5) * 0.4,
+    opacity: Math.random() * 0.5 + 0.15,
+    char: HEART_CHARS[Math.floor(Math.random() * HEART_CHARS.length)],
+    rotation: Math.random() * Math.PI * 2,
+    rotSpeed: (Math.random() - 0.5) * 0.02,
+  };
+}
+
+function drawParticles() {
+  ctx.clearRect(0, 0, W, H);
+  particles.forEach((p, i) => {
+    ctx.save();
+    ctx.globalAlpha = p.opacity;
+    ctx.font = `${p.size}px serif`;
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rotation);
+    ctx.fillText(p.char, -p.size/2, p.size/2);
+    ctx.restore();
+    p.y -= p.speed;
+    p.x += p.drift;
+    p.rotation += p.rotSpeed;
+    if (p.y < -30) particles[i] = newParticle(false);
+  });
+  requestAnimationFrame(drawParticles);
+}
+drawParticles();
+
+/* ─── Love messages ─── */
+const messages = [
+  "Distance means so little when someone means so much 💖",
+  "Every tick of the clock brings you one second closer 🌙",
+  "The same moon watches over both of you tonight 🌕",
+  "Time zones apart, but hearts forever in sync 💞",
+  "When you sleep, they wake — love bridges every hour ☀️",
+  "11,700 km cannot dim what shines between two souls 💫",
+  "Good morning from Brampton… good evening from India 🌅",
+  "Love is the one timezone that needs no conversion 💝",
+  "Two clocks, one heartbeat 💓",
+  "Somewhere between IST and EST, love lives rent-free 🏡",
+  "No algorithm calculates how much you are missed 🤍",
+  "Every sunrise India sees, Canada dreams about you 🌄",
+  "Distance is just a test to see how far love can travel 🚀",
+  "Miles apart, hearts together 💗",
+  "You are my favorite notification 📱💕",
+  "Home is wherever your voice is 🏠💞",
+  "Counting hours till we count in person 🕰️💘",
+  "My timezone is whatever timezone you are in ⏳❤️",
+  "Even the stars line up for us across the world ✨",
+  "Two cities, one love story 🌍💑",
+  "You are the reason my phone never sleeps 📲💓",
+  "Every call feels like coming home 📞🏡",
+  "Wherever you wake up, my heart is already there 💌",
+  "Love travels faster than any flight ✈️💖",
+  "My favorite time of day is whenever I talk to you ⏰💕",
+  "Half a world away, whole in my heart 🌎❤️",
+  "Some love stories are written in two timezones 📖💞",
+  "You make far feel near 💫",
+  "My heart doesn't need a passport to find you 💓🛫",
+  "Good night from one side, good morning from the other 🌙☀️",
+  "Distance is temporary, love is permanent 💍💖",
+  "You are worth every hour of time difference ⌛💕",
+  "Two skies, one moon, one love 🌌💗",
+  "Missing you in every timezone simultaneously 🕓💔➡️💖",
+  "Our love runs on its own clock ⏱️❤️",
+  "Every minute apart makes the reunion sweeter ⏳😍",
+  "You are my morning coffee and my midnight thought ☕🌃",
+  "No ocean too wide, no clock too far 🌊⏰",
+  "Loving you across 13,000 km, one day at a time 🗺️💞",
+  "My heart keeps your time zone too 💓🕰️",
+  "Holding on tighter the farther you are 🤍",
+  "We don't need same time, just same heart 💗",
+  "Every sunset is a step closer to you 🌇❤️",
+  "Forever grateful the internet lets me reach you instantly 📡💕",
+  "You're the calm in my chaos, no matter the hour 🌙",
+  "Some bonds don't need geography to grow 🌱💞",
+  "Loving you is my favorite hobby across continents 🌐💖",
+  "The world spins, but my thoughts stay on you 🌍💭",
+  "My day starts and ends with your name 📝❤️",
+  "Two hearts, one heartbeat, infinite kilometers 💓",
+  "You're worth the jet lag, the wait, and everything between ✈️💗",
+  "Every video call is a little vacation home 📹🏡",
+  "Long distance just means our love has range 📶💞",
+  "I'd cross any timezone to see you smile 😊🌏",
+  "You're the warmest part of my coldest morning ☃️❤️",
+  "My favorite app is the one that connects us 📱💕",
+  "Even jet lag can't tire out this love ✈️😴💖",
+  "You're my constant in a world of shifting clocks ⏰💗",
+  "Some love stories need two continents to fit 🌎💞",
+  "Every text from you resets my whole day 📩❤️",
+  "Loving you is the easiest thing across any distance 💞",
+  "I carry your timezone in my heart, always 💓🗺️",
+  "Apart but never absent from each other's day 📆💕",
+  "You're the reason I check the clock with a smile 🕐😊",
+  "No miles can outpace how fast I miss you 🏎️💔➡️💖",
+  "Half the world away, all of my heart 🌍❤️",
+  "Our love doesn't believe in borders 🚫🛂💞",
+  "You're my favorite reason to stay up late 🌙💗",
+  "Every sunrise is a promise we'll meet again 🌅💍",
+  "Distance taught me how loud silence from you feels 🤫💔",
+  "You make every timezone feel like home 🏡⏳",
+  "I measure distance in heartbeats, not kilometers 💓📏",
+  "Your good morning is my good night, both full of you 🌅🌙",
+  "Love like ours doesn't need same time zones, just same intent 💞",
+  "Every plane that flies your way carries a piece of my heart ✈️💗",
+  "You're proof that love can survive any time difference ⏰❤️",
+  "I'd stay awake through every hour just to hear your voice 🌃📞",
+  "The clocks may differ but our hearts beat the same rhythm 💓",
+  "You're the missing piece, no matter which side of the globe 🧩💕",
+  "Every mile between us is a story we'll tell together 🗺️📖",
+  "My heart does the math — it's always time for you 🧮❤️",
+  "Loving you from here makes here feel closer to there 🏞️💞",
+  "You're my favorite kind of long distance 🚗💖",
+  "We turned timezones into a love language 🕰️💗",
+  "Each goodbye is just a 'see you soon' in disguise 👋💕",
+  "You're worth every sleepy 2 AM call 🌙📞❤️",
+  "Distance just means our hugs are extra long when we meet 🤗💞",
+  "My world revolves around your timezone too 🌍💓",
+  "Every clock reminds me I'm one hour closer to you ⏰💗",
+  "You're the thought that survives every time difference 💭❤️",
+  "Two timezones, one unbreakable bond 🔗💞",
+  "I love you in every hour, every zone, every day 🌐❤️",
+  "Far in miles, near in heart, always 💌💗",
+  "You're my favorite time, no matter what the clock says ⏱️😍",
+  "Loving you bridges every ocean between us 🌊💞",
+  "Some distances exist only on the map, not in the heart 🗺️❤️",
+  "Every sunrise you see, I send my love along with it 🌅💕",
+  "You're my favorite person across every timezone map 🗺️😘",
+  "Loving you needs no daylight savings, just patience and heart 🕰️❤️",
+  "Wherever the clock points, my love points to you 🧭💖",
+];
+let msgIdx = 0;
+function rotateMsgs() {
+  const el = document.getElementById('msgText');
+  el.style.opacity = 0;
+  setTimeout(() => {
+    msgIdx = (msgIdx + 1) % messages.length;
+    el.textContent = messages[msgIdx];
+    el.style.transition = 'opacity 0.8s';
+    el.style.opacity = 1;
+  }, 400);
+}
+document.getElementById('msgText').textContent = messages[0];
+setInterval(rotateMsgs, 5000);
+
+/* ─── Time helpers ─── */
+function getTimeIn(tz) {
+  return new Date(new Date().toLocaleString('en-US', { timeZone: tz }));
+}
+
+function fmt2(n) { return String(n).padStart(2, '0'); }
+
+function fmtTime(d) {
+  let h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return `${fmt2(h)}:${fmt2(m)}:${fmt2(s)} ${ampm}`;
+}
+
+function fmtDate(d) {
+  return d.toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+}
+
+function setHand(id, deg) {
+  document.getElementById(id).style.transform = `rotate(${deg}deg)`;
+}
+
+function updateClock(d, prefix, faceId, skyId) {
+  const h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
+  const hDeg = (h % 12) * 30 + m * 0.5;
+  const mDeg = m * 6 + s * 0.1;
+  const sDeg = s * 6;
+  setHand(`${prefix}hour`, hDeg);
+  setHand(`${prefix}min`,  mDeg);
+  setHand(`${prefix}sec`,  sDeg);
+
+  const isDay = h >= 6 && h < 18;
+  const face = document.getElementById(faceId);
+  face.classList.toggle('is-day', isDay);
+  face.classList.toggle('is-night', !isDay);
+  document.getElementById(skyId).textContent = isDay ? '☀️' : '🌙';
+}
+
+function timeDiff(dIndia, dCanada) {
+  const istMin  = dIndia.getHours()  * 60 + dIndia.getMinutes();
+  const canMin  = dCanada.getHours() * 60 + dCanada.getMinutes();
+  let diff = istMin - canMin;
+  if (diff < 0) diff += 1440;
+  const h = Math.floor(diff / 60);
+  const m = diff % 60;
+  const dir = istMin >= canMin ? 'India is ahead by' : 'Canada is ahead by';
+  // Actually IST is always ahead of ET
+  const totalDiff = (5 * 60 + 30) - (dCanada.getTimezoneOffset() * -1);
+  return `🕰 India is ${h}h ${m}m ahead of Brampton`;
+}
+
+function getTZLabel() {
+  const now = new Date();
+  const canStr = now.toLocaleString('en-US', { timeZone: 'America/Toronto', timeZoneName: 'short' });
+  const match = canStr.match(/\b(E[DS]T)\b/);
+  return match ? match[1] : 'ET';
+}
+
+/* ─── Main tick ─── */
+function tick() {
+  const india  = getTimeIn('Asia/Kolkata');
+  const canada = getTimeIn('America/Toronto');
+
+  document.getElementById('indiaTime').textContent  = fmtTime(india);
+  document.getElementById('canadaTime').textContent = fmtTime(canada);
+  document.getElementById('indiaDate').textContent  = fmtDate(india);
+  document.getElementById('canadaDate').textContent = fmtDate(canada);
+
+  updateClock(india,  'i', 'faceIndia', 'iSky');
+  updateClock(canada, 'c', 'faceCan',   'cSky');
+
+  // Diff: IST = UTC+5:30, Toronto = UTC-5 (EST) or UTC-4 (EDT)
+  const istOffset = 5 * 60 + 30; // minutes
+  const torOffset = -canada.getTimezoneOffset(); // minutes ahead of UTC
+  const diffMin = istOffset - torOffset;
+  const dH = Math.floor(diffMin / 60);
+  const dM = diffMin % 60;
+  document.getElementById('diffBadge').textContent =
+    `🕰 India is ${dH}h ${dM ? dM + 'm' : ''} ahead`;
+
+  const tzLabel = getTZLabel();
+  document.getElementById('canTZbadge').textContent =
+    `${tzLabel === 'EDT' ? 'UTC −4 (EDT)' : 'UTC −5 (EST)'}`;
+}
+
+tick();
+setInterval(tick, 1000);
+
+/* ─── Weather (Open-Meteo, one-word) ─── */
+const WEATHER_WORD = {
+  0: 'Clear', 1: 'Mainly Clear', 2: 'Cloudy', 3: 'Overcast',
+  45: 'Foggy', 48: 'Foggy',
+  51: 'Drizzle', 53: 'Drizzle', 55: 'Drizzle',
+  56: 'Drizzle', 57: 'Drizzle',
+  61: 'Rainy', 63: 'Rainy', 65: 'Rainy',
+  66: 'Rainy', 67: 'Rainy',
+  71: 'Snowy', 73: 'Snowy', 75: 'Snowy', 77: 'Snowy',
+  80: 'Showers', 81: 'Showers', 82: 'Showers',
+  85: 'Snowy', 86: 'Snowy',
+  95: 'Stormy', 96: 'Stormy', 99: 'Stormy',
+};
+const WEATHER_ICON = {
+  Clear: '☀️', 'Mainly Clear': '🌤', Cloudy: '⛅', Overcast: '☁️',
+  Foggy: '🌫', Drizzle: '🌦', Rainy: '🌧', Snowy: '❄️',
+  Showers: '🌧', Stormy: '⛈',
+};
+
+async function fetchWeather(lat, lon, elId) {
+  try {
+    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+    const data = await res.json();
+    const code = data.current_weather.weathercode;
+    const word = WEATHER_WORD[code] || 'Mild';
+    const icon = WEATHER_ICON[word] || '🌡';
+    document.getElementById(elId).textContent = `${icon} ${word}`;
+  } catch (e) {
+    document.getElementById(elId).textContent = '🌡 N/A';
+  }
+}
+
+function updateWeather() {
+  fetchWeather(28.6139, 77.2090, 'indiaWeather');   // New Delhi
+  fetchWeather(43.7315, -79.7624, 'canadaWeather');  // Brampton
+}
+updateWeather();
+setInterval(updateWeather, 10 * 60 * 1000);
+
+/* ─── Click to spawn hearts on clock cards ─── */
+document.querySelectorAll('.clock-card').forEach(card => {
+  card.addEventListener('click', (e) => {
+    const rect = card.getBoundingClientRect();
+    for (let i = 0; i < 6; i++) {
+      const h = document.createElement('div');
+      h.textContent = HEART_CHARS[Math.floor(Math.random() * HEART_CHARS.length)];
+      h.style.cssText = `
+        position:fixed;
+        left:${e.clientX + (Math.random()-0.5)*60}px;
+        top:${e.clientY}px;
+        font-size:${Math.random()*16+14}px;
+        pointer-events:none;
+        z-index:9999;
+        animation: popHeart 1s ease forwards;
+        animation-delay:${i*0.08}s;
+      `;
+      document.body.appendChild(h);
+      setTimeout(() => h.remove(), 1200);
+    }
+  });
+});
+
+/* Inject keyframe for pop hearts */
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes popHeart {
+    0%   { opacity:1; transform: translateY(0) scale(0.5); }
+    60%  { opacity:1; transform: translateY(-60px) scale(1.2); }
+    100% { opacity:0; transform: translateY(-100px) scale(0.8); }
+  }
+`;
+document.head.appendChild(style);
+</script>
+</body>
+</html>
